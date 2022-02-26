@@ -50,3 +50,9 @@ modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
+
+# vscode
+.vscode
+
+# bin
+dfa_des
