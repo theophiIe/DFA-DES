@@ -12,6 +12,7 @@ dfa_des: $(FILES)
 
 run: dfa_des
 	@./dfa_des
+	@python3 src/attack_K.py
 
 archive:
 	@mkdir -p $(AR)
