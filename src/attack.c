@@ -5,6 +5,8 @@
 #include "../header/sbox.h"
 #include "../header/des.h"
 
+const char* filename = "potential_K.txt";
+
 static const __uint64_t clair = 0xA1F8ADF7767C5B6D;
 static const __uint64_t chiffre = 0x35D12C82F252DC5B;
 
@@ -112,15 +114,186 @@ __uint64_t key_schredul_inv(__uint64_t K16) {
     return pc1_inv(pc2_inv(K16));
 }
 
-void attack() {   
-    __uint64_t K16 = get_K16();
-    
-    printf("K16 : ");
-    print_binary_64(K16);
-    printf("\n");
+static inline 
+__uint64_t missing_bit_14(__uint64_t K) { return K | 0x4000000000000; }
 
-    // print_binary_64(pc1_inv(pc2_inv(K16)));
-    // printf("\n");
+static inline 
+__uint64_t missing_bit_15(__uint64_t K) { return K | 0x2000000000000; }
+
+static inline 
+__uint64_t missing_bit_19(__uint64_t K) { return K | 0x200000000000; }
+
+static inline 
+__uint64_t missing_bit_20(__uint64_t K) { return K | 0x100000000000; }
+
+static inline 
+__uint64_t missing_bit_51(__uint64_t K) { return K | 0x2000; }
+
+static inline 
+__uint64_t missing_bit_54(__uint64_t K) { return K | 0x400; }
+
+static inline 
+__uint64_t missing_bit_58(__uint64_t K) { return K | 0x40; }
+
+static inline 
+__uint64_t missing_bit_60(__uint64_t K) { return K | 0x10; }
+
+static inline 
+void write_result(__uint64_t K) {
+    FILE* output_file = fopen(filename, "a");
+    if (!output_file) {
+        perror("fopen");
+    }
+
+    char hex[17];
+    sprintf(hex, "%lx", K);
+    fputs(hex, output_file);
+    fputs("\n", output_file);
+
+    fclose(output_file);
+}
+
+static inline 
+void missing_2_bit(__uint64_t K) {
+    __uint64_t tmp_K = 0x00;
+    
+    tmp_K = missing_bit_58(K);
+    write_result(tmp_K);
+
+    tmp_K = missing_bit_60(tmp_K);
+    write_result(tmp_K);
+}
+
+static inline 
+void missing_3_bit(__uint64_t K) {
+    __uint64_t tmp_K = 0x00;
+    
+    tmp_K = missing_bit_54(K);
+    write_result(tmp_K);
+
+    missing_2_bit(tmp_K);
+
+    tmp_K = missing_bit_60(tmp_K);
+    write_result(tmp_K);
+}
+
+static inline 
+void missing_4_bit(__uint64_t K) {
+    __uint64_t tmp_K = 0x00;
+    
+    tmp_K = missing_bit_51(K);
+    write_result(tmp_K);
+
+    missing_3_bit(tmp_K);
+    missing_2_bit(tmp_K);
+    
+    tmp_K = missing_bit_60(tmp_K);
+    write_result(tmp_K);
+}
+
+static inline 
+void missing_5_bit(__uint64_t K) {
+    __uint64_t tmp_K = 0x00;
+    
+    tmp_K = missing_bit_20(K);
+    write_result(tmp_K);
+
+    missing_4_bit(tmp_K);
+    missing_3_bit(tmp_K);
+    missing_2_bit(tmp_K);
+    
+    tmp_K = missing_bit_60(tmp_K);
+    write_result(tmp_K);
+}
+
+static inline 
+void missing_6_bit(__uint64_t K) {
+    __uint64_t tmp_K = 0x00;
+    
+    tmp_K = missing_bit_19(K);
+    write_result(tmp_K);
+
+    missing_5_bit(tmp_K);
+    missing_4_bit(tmp_K);
+    missing_3_bit(tmp_K);
+    missing_2_bit(tmp_K);
+
+    tmp_K = missing_bit_60(tmp_K);
+    write_result(tmp_K);
+}
+
+static inline 
+void missing_7_bit(__uint64_t K) {
+    __uint64_t tmp_K = 0x00;
+    
+    tmp_K = missing_bit_15(K);
+    write_result(tmp_K);
+
+    missing_6_bit(tmp_K);
+    missing_5_bit(tmp_K);
+    missing_4_bit(tmp_K);
+    missing_3_bit(tmp_K);
+    missing_2_bit(tmp_K);
+    
+    tmp_K = missing_bit_60(tmp_K);
+    write_result(tmp_K);
+}
+
+static inline 
+void missing_8_bit(__uint64_t K) {
+    __uint64_t tmp_K = 0x00;
+    
+    tmp_K = missing_bit_14(K);
+    write_result(tmp_K);
+    
+    missing_7_bit(tmp_K);
+    missing_6_bit(tmp_K);
+    missing_5_bit(tmp_K);
+    missing_4_bit(tmp_K);
+    missing_3_bit(tmp_K);
+    missing_2_bit(tmp_K);
+    
+    tmp_K = missing_bit_60(tmp_K);
+    write_result(tmp_K);
+}
+
+static inline 
+void find_K(__uint64_t K) {
+    FILE* output_file = fopen(filename, "w");
+    if (!output_file) {
+        perror("fopen");
+    }
+
+    char hex[17];
+    sprintf(hex, "%lx", missing_bit_60(K));
+    fputs(hex, output_file);
+    fputs("\n", output_file);
+ 
+    fclose(output_file);
+    
+    missing_2_bit(K);
+    missing_3_bit(K);
+    missing_4_bit(K);
+    missing_5_bit(K);
+    missing_6_bit(K);
+    missing_7_bit(K);
+    missing_8_bit(K);
+}
+
+void attack() {
+    printf("Recherche de K16:\n");
+    __uint64_t K16 = get_K16();
+
+    printf("résultat de K16 en binaire:\n");
+    print_binary_64(K16);
+
+    printf("\n\nRecherche de K16 en hexadecimal:\n");
+    char hex[17];
+    sprintf(hex, "%lx", K16);
+    puts(hex);
+
+    __uint64_t K_48_bit = pc1_inv(pc2_inv(K16));
+    find_K(K_48_bit);
 }
 
 
