@@ -14,6 +14,9 @@ run: dfa_des
 	@./dfa_des
 	@python3 src/attack_K.py
 
+K16: dfa_des
+	@./dfa_des
+
 archive:
 	@mkdir -p $(AR)
 	@cp -r src/ Makefile README.md $(AR)
