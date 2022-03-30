@@ -2,6 +2,7 @@
 
 #include "../header/des.h"
 
+// Corespond à la permutation intial du DES (IP)
 inline __uint64_t initial_permutation(__uint64_t value) {
     __uint64_t p = 0x00;
 
@@ -48,6 +49,7 @@ inline __uint64_t initial_permutation(__uint64_t value) {
     return p;
 }
 
+// Correspond à l'expension du du DES (E)
 inline __uint64_t expansion(__uint32_t R) {
     __uint64_t e = 0x00;
     __uint64_t value = R;
@@ -60,6 +62,7 @@ inline __uint64_t expansion(__uint32_t R) {
     return e;
 }
 
+// Correspond à la permutation inverse du DES (P^-1)
 inline __uint32_t permutation_inv(__uint32_t R) {
     __uint32_t p_inv = 0x00;
 
@@ -75,6 +78,7 @@ inline __uint32_t permutation_inv(__uint32_t R) {
     return p_inv;
 }
 
+// Correspond à la permutation 1 inverse du DES (PC^-1)
 inline __uint64_t pc1_inv(__uint64_t value) {
     __uint64_t pc1 = 0x00;
 
@@ -113,6 +117,7 @@ inline __uint64_t pc1_inv(__uint64_t value) {
     return pc1;
 }
 
+// Correspond à la permutation 2 inverse du DES (PC^-2)
 inline __uint64_t pc2_inv(__uint64_t value) {
     __uint64_t pc2 = 0x00;
 
@@ -148,10 +153,12 @@ inline __uint64_t pc2_inv(__uint64_t value) {
     return pc2;
 }
 
+// Permet de récuper L
 inline __uint32_t get_L(__uint64_t value) {
-    return ((value >> 32) & 0xFFFFFFFF);
+    return (value & 0xFFFFFFFF);
 }
 
+// Permet de récuper R
 inline __uint32_t get_R(__uint64_t value) {
-    return (value & 0xFFFFFFFF);
+    return ((value >> 32) & 0xFFFFFFFF);
 }

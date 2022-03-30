@@ -5,11 +5,13 @@
 #include "../header/sbox.h"
 #include "../header/des.h"
 
+// Fichier qui va contenir les 256 clés K possible
 const char* filename = "potential_K.txt";
 
-static const __uint64_t clair = 0xA1F8ADF7767C5B6D;
+// Message chiffré correcte
 static const __uint64_t chiffre = 0x35D12C82F252DC5B;
 
+// Tous les messages chiffrés fautés
 static const __uint64_t chiffres_faux[32] = { 
     0x37D02CC6F253DC5F, 0x35C32CC2F253DC5B, 0x35D12EC6F252DC5B, 0x35812884E252DC5B,  
     0x34C128C6E052DC5B, 0x35912882E250DC5B, 0x34D12882F252DE5B, 0x35912C83A256DC59,
@@ -20,6 +22,7 @@ static const __uint64_t chiffres_faux[32] = {
     0xA1D12C92F3529C5B, 0x35512C92F2529C5B, 0x35D1AC82F352985B, 0x35D42C02F3529C5F,
     0x35D42C927352985F, 0x35D02C82F2D2DC4F, 0x35D42C82F2525C5B, 0x35D42C86F253DCCF };
 
+// Tableau contenant le numéro des messages fautés
 static const int faulted_bits[8][6] = {
     {  0, 31, 30, 29, 28, 27 },
     { 28, 27, 26, 25, 24, 23 },
@@ -30,6 +33,7 @@ static const int faulted_bits[8][6] = {
     {  8,  7,  6,  5,  4,  3 },
     {  4,  3,  2,  1,  0, 31 }};
 
+// Permet de déterminer une portion de clé correct en fonction des résultats des Sbox
 static inline 
 __uint64_t find_K16(__int64_t bit_Ki[8][6][64], __int64_t num_solution[8][6], int sbox, __uint64_t K_16) {
     int sol_2, sol_1 = 0;
@@ -57,6 +61,7 @@ __uint64_t find_K16(__int64_t bit_Ki[8][6][64], __int64_t num_solution[8][6], in
     return ((K_16 << 0x06) | bit_Ki[sbox][0][0]);
 }
 
+// Permet de retrouver K16
 static inline 
 __uint64_t get_K16() {    
     __uint64_t K16 = 0x00;
@@ -78,14 +83,14 @@ __uint64_t get_K16() {
             L16_err = get_L(chiffre_IP);
             R16_err = get_R(chiffre_IP);
         
-            res_P_inv = permutation_inv(L16 ^ L16_err);
+            res_P_inv = permutation_inv(R16 ^ R16_err);
 
             __uint64_t mask_64 = (0xFC0000000000 >> (sbox * 6));
             __uint32_t mask_32 = (0x0000F0000000 >> (sbox * 4));
 
            for (__uint8_t Ki = 0; Ki < 64; Ki++) {
-                __uint8_t e1 = ((expansion(R16)     & mask_64) >> (42 - (6 * sbox))) ^ Ki;
-                __uint8_t e2 = ((expansion(R16_err) & mask_64) >> (42 - (6 * sbox))) ^ Ki;
+                __uint8_t e1 = ((expansion(L16)     & mask_64) >> (42 - (6 * sbox))) ^ Ki;
+                __uint8_t e2 = ((expansion(L16_err) & mask_64) >> (42 - (6 * sbox))) ^ Ki;
 
                 __uint8_t row = (2 * ((e1 & 0x20) >> 5) | (e1 & 0x1));
                 __uint8_t column = (e1 & 0x1E) >> 1;
@@ -109,11 +114,13 @@ __uint64_t get_K16() {
     return K16;
 }
 
+// Permet de faire l'inverse de key schedule
 static inline 
-__uint64_t key_schredul_inv(__uint64_t K16) {
+__uint64_t key_schedule_inv(__uint64_t K16) {
     return pc1_inv(pc2_inv(K16));
 }
 
+// Permet d'ajouter le bit manquant dans la clé
 static inline 
 __uint64_t missing_bit_14(__uint64_t K) { return K | 0x4000000000000; }
 
@@ -138,6 +145,7 @@ __uint64_t missing_bit_58(__uint64_t K) { return K | 0x40; }
 static inline 
 __uint64_t missing_bit_60(__uint64_t K) { return K | 0x10; }
 
+// Permet d'écrire la clé potentiel dans un fichier
 static inline 
 void write_result(__uint64_t K) {
     FILE* output_file = fopen(filename, "a");
@@ -153,6 +161,7 @@ void write_result(__uint64_t K) {
     fclose(output_file);
 }
 
+// Permet d'avoir les 256 possibilité de clé en fonction des 8 bits manquant
 static inline 
 void missing_2_bit(__uint64_t K) {
     __uint64_t tmp_K = 0x00;
@@ -257,6 +266,7 @@ void missing_8_bit(__uint64_t K) {
     write_result(tmp_K);
 }
 
+// Permet d'écrire les 256 clés possible dans un fichier
 static inline 
 void find_K(__uint64_t K) {
     FILE* output_file = fopen(filename, "w");
@@ -280,19 +290,21 @@ void find_K(__uint64_t K) {
     missing_8_bit(K);
 }
 
+// Permet de lancer les fonctions permettant l'attaque
 void attack() {
     printf("Recherche de K16:\n");
     __uint64_t K16 = get_K16();
 
-    printf("résultat de K16 en binaire:\n");
+    printf("Résultat de K16 en binaire:\n");
     print_binary_64(K16);
 
-    printf("\n\nRecherche de K16 en hexadecimal:\n");
+    printf("\n\nRésultat de K16 en hexadecimal:\n");
     char hex[17];
     sprintf(hex, "%lx", K16);
     puts(hex);
+    printf("\n");
 
-    __uint64_t K_48_bit = pc1_inv(pc2_inv(K16));
+    __uint64_t K_48_bit = key_schedule_inv(K16);
     find_K(K_48_bit);
 }
 
